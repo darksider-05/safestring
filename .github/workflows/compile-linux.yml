@@ -16,10 +16,17 @@ jobs:
     - name: Install Dart
       uses: dart-lang/setup-dart@v1
 
+    - name: Verify file structure
+      run: ls -R
+      continue-on-error: true
+
+    - name: Get dependencies
+      run: dart pub get
+
     - name: Compile Dart CLI to Linux executable
       run: |
-        dart pub get
         dart compile exe bin/main.dart -o build/my_app
+      continue-on-error: false
 
     - name: Upload compiled binary
       uses: actions/upload-artifact@v4

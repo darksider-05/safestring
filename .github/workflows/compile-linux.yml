@@ -1,0 +1,28 @@
+name: Compile Dart CLI for Linux
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Dart
+      uses: dart-lang/setup-dart@v1
+
+    - name: Compile Dart CLI to Linux executable
+      run: |
+        dart pub get
+        dart compile exe bin/main.dart -o build/my_app
+
+    - name: Upload compiled binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: dart-linux-executable
+        path: build/my_app

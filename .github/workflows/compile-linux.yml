@@ -6,53 +6,50 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-
-      - name: Get dependencies
-        run: dart pub get
-
-      - name: Create build directory per OS
-        run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            mkdir -p build/linux
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            mkdir -p build/macos
-          else
-            mkdir build\windows
-          fi
-        shell: bash
-
-      - name: Compile SafeString CLI
-        run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            dart compile exe bin/main.dart -o build/linux/SafeString-linux
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            dart compile exe bin/main.dart -o build/macos/SafeString-macos
-          else
-            dart compile exe bin/main.dart -o build/windows/SafeString-windows.exe
-        shell: bash
-
-      - name: Verify build
-        run: |
-          echo "Files in build directory:"
-          ls -R build
-        shell: bash
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - run: dart pub get
+      - run: mkdir -p build/linux
+      - run: dart compile exe bin/main.dart -o build/linux/SafeString-linux
+      - run: ls -l build/linux
+      - uses: actions/upload-artifact@v4
         with:
-          name: SafeString-binaries
-          path: build/
+          name: SafeString-linux
+          path: build/linux/SafeString-linux
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: mkdir build\windows
+      - run: dart compile exe bin/main.dart -o build/windows/SafeString-windows.exe
+      - run: dir build\windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeString-windows
+          path: build/windows/SafeString-windows.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: mkdir -p build/macos
+      - run: dart compile exe bin/main.dart -o build/macos/SafeString-macos
+      - run: ls -l build/macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeString-macos
+          path: build/macos/SafeString-macos

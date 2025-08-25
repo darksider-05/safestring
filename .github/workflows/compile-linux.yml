@@ -1,4 +1,4 @@
-name: Compile Dart CLI for Multiple Platforms
+name: Build SafeString CLI for All Platforms
 
 on:
   push:
@@ -13,41 +13,46 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Install Dart
-      uses: dart-lang/setup-dart@v1
-      with:
-        sdk: "stable"
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
 
-    - name: Verify file structure
-      run: ls -R
+      - name: Get dependencies
+        run: dart pub get
 
-    - name: List bin folder
-      run: ls -l bin
+      - name: Create build directory per OS
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            mkdir -p build/linux
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            mkdir -p build/macos
+          else
+            mkdir build\windows
+          fi
+        shell: bash
 
-    - name: Get dependencies
-      run: dart pub get
+      - name: Compile SafeString CLI
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            dart compile exe bin/main.dart -o build/linux/SafeString-linux
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            dart compile exe bin/main.dart -o build/macos/SafeString-macos
+          else
+            dart compile exe bin/main.dart -o build/windows/SafeString-windows.exe
+        shell: bash
 
-    - name: Create build directory
-      run: mkdir -p build
+      - name: Verify build
+        run: |
+          echo "Files in build directory:"
+          ls -R build
+        shell: bash
 
-    - name: Compile CLI
-      run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          dart compile exe bin/main.dart -o build/SafeString-windows.exe
-        elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-          dart compile exe bin/main.dart -o build/SafeString-macos
-        else
-          dart compile exe bin/main.dart -o build/SafeString-linux
-        fi
-
-    - name: Verify compiled binary
-      run: ls -l build
-
-    - name: Upload compiled binaries
-      uses: actions/upload-artifact@v4
-      with:
-        name: SafeString-binaries
-        path: build/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SafeString-binaries
+          path: build/
